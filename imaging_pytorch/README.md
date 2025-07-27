@@ -1,7 +1,5 @@
-##### PyTorch for Medical Imaging Applications
-- Deep Learning in Applications 
-- Monai
-- Case Studies 
+### 1. PyTorch for Medical Imaging Applications
+- Case Studies, Deep Learning in Applications  
 
 
 ##### [Medical imaging] PyTorch Reference Application to detect lung cancer
