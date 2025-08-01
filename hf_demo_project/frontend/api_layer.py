@@ -23,9 +23,7 @@ import motor.motor_asyncio # MongoDB async driver
 import traceback # For detailed error logging
 import gradio as gr # Import Gradio
 
-# --- Configuration ---
-#from dotenv import load_dotenv
-#load_dotenv()
+
 
 MONGO_DETAILS = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 VIDEO_STORAGE_DIR = "generated_videos"
@@ -37,16 +35,11 @@ logger.setLevel(logging.INFO)
 from server_block import gradio_demo, api_demo ##, cli_demo
 
 logger.warning("Starting FastAPI app")
-
-
-# --- Logging ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# --- FastAPI App Initialization ---
 app = FastAPI(title='Video Generation API with Gradio UI')
 
-# --- MongoDB Client ---
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DETAILS)
 database = client.video_app_db
 jobs_collection = database.jobs
@@ -63,7 +56,7 @@ async def startup_event():
         logger.error(f"MongoDB connection failed: {e}")
         # Consider raising an exception if MongoDB is critical
 
-# --- Request Models (for FastAPI native endpoint) ---
+# Request Models (for FastAPI native endpoint) 
 class VideoRequest(BaseModel):
     prompt: str
     negative_prompt: str = None
@@ -81,7 +74,7 @@ class JobStatusResponse(BaseModel):
     message: str = None
 
 
-# --- Background Task Function for Video Generation ---
+# Background Task Function for Video Generation 
 async def _generate_video_task(job_id: str, request_data: dict):
     """
     This function performs the actual video generation.
