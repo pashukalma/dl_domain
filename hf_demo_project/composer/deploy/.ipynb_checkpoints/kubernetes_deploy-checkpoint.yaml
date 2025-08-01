@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: video-generation-service
+  namespace: video-workflow
+spec:
+  replicas: 3  # Scale to 3 instances
+  selector:
+    matchLabels:
+      app: video-generation-service
+  template:
+    metadata:
+      labels:
+        app: video-generation-service
+    spec:
+      containers:
+      - name: video-generation-service
+        image: video-generation-service:latest
+        ports:
+        - containerPort: 8001
+        env:
+        - name: KAFKA_BROKER
+          value: "kafka-service:9092"
+        - name: MONGO_URI
+          value: "mongodb://mongo-service:27017"
+        - name: S3_BUCKET
+          value: "video-generation-output"
+        - name: AWS_REGION
+          value: "us-east-1"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: access-key-id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: secret-access-key
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+          requests:
+            cpu: "0.5"
+            memory: "1Gi"

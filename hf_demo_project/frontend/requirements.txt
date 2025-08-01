@@ -1,0 +1,23 @@
+addict>=2.4.0
+av==13.1.0
+click>=8.1.7
+einops>=0.8.0
+moviepy==1.0.3
+omegaconf>=2.3.0
+pillow==9.5.0
+pyyaml>=6.0.2
+ray>=2.37.0
+sentencepiece>=0.2.0
+setuptools>=75.2.0
+torch>=2.4.1
+transformers>=4.45.2
+
+## For networking
+gunicorn==23.0.0
+pandas==2.2.3
+flask-sse==1.0.0
+httpx_sse==0.4.0
+
+## Gradio
+gradio==5.3.0
+fastapi==0.115.3
