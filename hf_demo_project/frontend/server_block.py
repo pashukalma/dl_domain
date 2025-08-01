@@ -303,6 +303,7 @@ def api_demo():
 
     with progress_bar(type="tqdm"):
         ##save_video(video[0], "video.mp4")
+        output_dir="outputs",
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f"output_{int(time.time())}.mp4")
         save_video(video[0], output_path)
