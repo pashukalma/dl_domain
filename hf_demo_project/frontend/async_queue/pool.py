@@ -1,4 +1,4 @@
-# simple_pool.py
+# pool.py
 
 import multiprocessing
 import time

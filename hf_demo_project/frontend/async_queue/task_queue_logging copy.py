@@ -1,4 +1,4 @@
-# simple_task_queue_logging.py
+# task_queue_logging.py
 
 import logging
 import multiprocessing

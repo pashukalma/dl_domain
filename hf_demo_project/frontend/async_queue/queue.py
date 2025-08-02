@@ -1,4 +1,4 @@
-# simple_queue.py
+# queue.py
 import multiprocessing
 
 def run():

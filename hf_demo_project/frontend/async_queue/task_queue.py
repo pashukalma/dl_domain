@@ -1,4 +1,4 @@
-# simple_task_queue.py
+# task_queue.py
 
 import multiprocessing
 import time
