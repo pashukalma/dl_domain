@@ -1,7 +1,3 @@
-
-!pip install torch >/dev/null #2>$1
-!pip install pytorch-lightning >/dev/null #2>$1
-
 import collections,hashlib, inspect
 import math, os, random, re, shutil, sys, tarfile, time, zipfile
 from collections import defaultdict
