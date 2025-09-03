@@ -1,7 +1,6 @@
 import collections,hashlib, inspect, time
 import math, os, random, re, shutil, sys, tarfile, time, zipfile
 from collections import defaultdict
-#import gym
 import pandas as pd
 import requests
 from IPython import display
@@ -705,7 +704,10 @@ def load_data_voc(batch_size, crop_size):
 DATA_URL = 'http://d2l-data.s3-accelerate.amazonaws.com/'
 DATA_HUB = dict()
 DATA_HUB['voc2012'] = (DATA_URL + 'VOCtrainval_11-May-2012.tar','4e443f8a2eca6b1dac8a6c57641b67dd40621a49')
+DATA_HUB['cifar10_tiny'] = (DATA_URL + 'kaggle_cifar10_tiny.zip', '2068874e4b9a9f0fb07ebe0ad2b29754449ccacd')
 
 def get_dataloader_workers():
     """Use 4 processes to read the data.`"""
     return 4
+
+gpus = ['cuda:0']
