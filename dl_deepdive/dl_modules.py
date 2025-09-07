@@ -31,6 +31,9 @@ reduce_sum = lambda x, *args, **kwargs: x.sum(*args, **kwargs)
 to = lambda x, *args, **kwargs: x.to(*args, **kwargs)
 int32, int64, float32 = torch.int32, torch.int64, torch.float32
 size = lambda x, *args, **kwargs: x.numel(*args, **kwargs)
+expand_dims = lambda x, *args, **kwargs: x.unsqueeze(*args, **kwargs)
+
+numpy = lambda x, *args, **kwargs: x.detach().numpy(*args, **kwargs)
 
 def cpu():
     return torch.device('cpu')
@@ -109,7 +112,7 @@ class ProgressBoard(HyperParameters):
         display.clear_output(wait=True)
 
 class Module(nn.Module, HyperParameters):
-    """The base class of models. """
+    """The base class of models."""
     def __init__(self, plot_train_per_epoch=2, plot_valid_per_epoch=1):
         super().__init__()
         self.save_hyperparameters()
@@ -281,11 +284,9 @@ class Trainer(HyperParameters):
         raise NotImplementedError
 
     def prepare_batch(self, batch):
-        """Defined in :numref:`sec_linear_scratch`"""
         return batch
 
     def fit_epoch(self):
-        """Defined in :numref:`sec_linear_scratch`"""
         self.model.train()
         for batch in self.train_dataloader:
             loss = self.model.training_step(self.prepare_batch(batch))
@@ -313,7 +314,6 @@ class Trainer(HyperParameters):
             batch = [to(a, self.gpus[0]) for a in batch]
         return batch
 
-
     def prepare_model(self, model):
         model.trainer = self
         model.board.xlim = [0, self.max_epochs]
@@ -330,9 +330,7 @@ class Trainer(HyperParameters):
                 param.grad[:] *= grad_clip_val / norm
 
 def accuracy(y_hat, y):
-    """Compute the number of correct predictions.
-
-    Defined in :numref:`sec_utils`"""
+    """Compute the number of correct predictions."""
     if len(y_hat.shape) > 1 and y_hat.shape[1] > 1:
         y_hat = argmax(y_hat, axis=1)
     cmp = astype(y_hat, y.dtype) == y
@@ -538,7 +536,7 @@ class Timer:
 timer = Timer()
 
 def evaluate_accuracy_gpu(net, data_iter, device=None):
-    """Compute the accuracy for a model on a dataset using a GPU. """
+    """Compute the accuracy for a model on a dataset using a GPU """
     if isinstance(net, nn.Module):
         net.eval()  # Set the model to evaluation mode
         if not device:
@@ -554,8 +552,7 @@ def evaluate_accuracy_gpu(net, data_iter, device=None):
             else:
                 X = X.to(device)
             y = y.to(device)
-            y_hat = net(X)
-            print(f"Validation - Output shape: {y_hat.shape}, Target shape: {y.shape}") # Debug print
+            y_hat = net(X).to(device)
             metric.add(accuracy(y_hat, y), size(y))
     return metric[0] / metric[1]
 
@@ -599,9 +596,7 @@ def download_extract(name, folder=None):
     return os.path.join(base_dir, folder) if folder else data_dir
 
 class VOCSegDataset(torch.utils.data.Dataset):
-    """A customized dataset to load the VOC dataset.
-
-    Defined in :numref:`sec_semantic_segmentation`"""
+    """A customized dataset to load the VOC dataset."""
 
     def __init__(self, is_train, crop_size, voc_dir):
         self.transform = torchvision.transforms.Normalize(
@@ -631,9 +626,7 @@ class VOCSegDataset(torch.utils.data.Dataset):
         return len(self.features)
 
 def read_voc_images(voc_dir, is_train=True):
-    """Read all VOC feature and label images.
-
-    Defined in :numref:`sec_semantic_segmentation`"""
+    """Read all VOC feature and label images."""
     txt_fname = os.path.join(voc_dir, 'ImageSets', 'Segmentation',
                              'train.txt' if is_train else 'val.txt')
     mode = torchvision.io.image.ImageReadMode.RGB
@@ -660,9 +653,7 @@ VOC_CLASSES = ['background', 'aeroplane', 'bicycle', 'bird', 'boat',
                'potted plant', 'sheep', 'sofa', 'train', 'tv/monitor']
 
 def voc_colormap2label():
-    """Build the mapping from RGB to class indices for VOC labels.
-
-    Defined in :numref:`sec_semantic_segmentation`"""
+    """Build the mapping from RGB to class indices for VOC labels."""
     colormap2label = torch.zeros(256 ** 3, dtype=torch.long)
     for i, colormap in enumerate(VOC_COLORMAP):
         colormap2label[
@@ -670,18 +661,14 @@ def voc_colormap2label():
     return colormap2label
 
 def voc_label_indices(colormap, colormap2label):
-    """Map any RGB values in VOC labels to their class indices.
-
-    Defined in :numref:`sec_semantic_segmentation`"""
+    """Map any RGB values in VOC labels to their class indices."""
     colormap = colormap.permute(1, 2, 0).numpy().astype('int32')
     idx = ((colormap[:, :, 0] * 256 + colormap[:, :, 1]) * 256
            + colormap[:, :, 2])
     return colormap2label[idx]
 
 def voc_rand_crop(feature, label, height, width):
-    """Randomly crop both feature and label images.
-
-    Defined in :numref:`sec_semantic_segmentation`"""
+    """Randomly crop both feature and label images."""
     rect = torchvision.transforms.RandomCrop.get_params(
         feature, (height, width))
     feature = torchvision.transforms.functional.crop(feature, *rect)
@@ -704,10 +691,385 @@ def load_data_voc(batch_size, crop_size):
 DATA_URL = 'http://d2l-data.s3-accelerate.amazonaws.com/'
 DATA_HUB = dict()
 DATA_HUB['voc2012'] = (DATA_URL + 'VOCtrainval_11-May-2012.tar','4e443f8a2eca6b1dac8a6c57641b67dd40621a49')
-DATA_HUB['cifar10_tiny'] = (DATA_URL + 'kaggle_cifar10_tiny.zip', '2068874e4b9a9f0fb07ebe0ad2b29754449ccacd')
+DATA_HUB['glove.6b.100d'] = (DATA_URL + 'glove.6B.100d.zip', 'cd43bfb07e3ee29fe6dcb097f37085f6cb64d94f')
+
+DATA_HUB['cifar10_tiny'] = (DATA_URL + 'kaggle_cifar10_tiny.zip',
+                                '2068874e4b9a9f0fb07ebe0ad2b29754449ccacd')
+
+DATA_HUB['aclImdb'] = (DATA_URL + 'aclImdb_v1.tar.gz','01ada507287d82875905620988597833ad4e0903')
 
 def get_dataloader_workers():
     """Use 4 processes to read the data.`"""
     return 4
 
 gpus = ['cuda:0']
+
+def tokenize(lines, token='word'):
+    """Split text lines into word or character tokens."""
+    assert token in ('word', 'char'), 'Unknown token type: ' + token
+    return [line.split() if token == 'word' else list(line) for line in lines]
+
+class Vocab:
+    """Vocabulary for text."""
+    def __init__(self, tokens=[], min_freq=0, reserved_tokens=[]):
+        # Flatten a 2D list if needed
+        if tokens and isinstance(tokens[0], list):
+            tokens = [token for line in tokens for token in line]
+        # Count token frequencies
+        counter = collections.Counter(tokens)
+        self.token_freqs = sorted(counter.items(), key=lambda x: x[1],
+                                  reverse=True)
+        # The list of unique tokens
+        self.idx_to_token = list(sorted(set(['<unk>'] + reserved_tokens + [
+            token for token, freq in self.token_freqs if freq >= min_freq])))
+        self.token_to_idx = {token: idx
+                             for idx, token in enumerate(self.idx_to_token)}
+
+    def __len__(self):
+        return len(self.idx_to_token)
+
+    def __getitem__(self, tokens):
+        if not isinstance(tokens, (list, tuple)):
+            return self.token_to_idx.get(tokens, self.unk)
+        return [self.__getitem__(token) for token in tokens]
+
+    def to_tokens(self, indices):
+        if hasattr(indices, '__len__') and len(indices) > 1:
+            return [self.idx_to_token[int(index)] for index in indices]
+        return self.idx_to_token[indices]
+
+    @property
+    def unk(self):  # Index for the unknown token
+        return self.token_to_idx['<unk>']
+
+def truncate_pad(line, num_steps, padding_token):
+    """Truncate or pad sequences."""
+    if len(line) > num_steps:
+        return line[:num_steps]  # Truncate
+    return line + [padding_token] * (num_steps - len(line))  # Pad
+
+def load_array(data_arrays, batch_size, is_train=True):
+    """Construct a PyTorch data iterator."""
+    dataset = torch.utils.data.TensorDataset(*data_arrays)
+    return torch.utils.data.DataLoader(dataset, batch_size, shuffle=is_train)
+
+class TokenEmbedding:
+    def __init__(self, embedding_name):
+        self.idx_to_token, self.idx_to_vec = self._load_embedding(
+            embedding_name)
+        self.unknown_idx = 0
+        self.token_to_idx = {token: idx for idx, token in
+                             enumerate(self.idx_to_token)}
+
+    def _load_embedding(self, embedding_name):
+        idx_to_token, idx_to_vec = ['<unk>'], []
+        data_dir = download_extract(embedding_name)
+        # GloVe website: https://nlp.stanford.edu/projects/glove/
+        # fastText website: https://fasttext.cc/
+        with open(os.path.join(data_dir, 'vec.txt'), 'r') as f:
+            for line in f:
+                elems = line.rstrip().split(' ')
+                token, elems = elems[0], [float(elem) for elem in elems[1:]]
+                # Skip header information, such as the top row in fastText
+                if len(elems) > 1:
+                    idx_to_token.append(token)
+                    idx_to_vec.append(elems)
+        idx_to_vec = [[0] * len(idx_to_vec[0])] + idx_to_vec
+        return idx_to_token, torch.tensor(idx_to_vec)
+
+    def __getitem__(self, tokens):
+        indices = [self.token_to_idx.get(token, self.unknown_idx)
+                   for token in tokens]
+        vecs = self.idx_to_vec[torch.tensor(indices)]
+        return vecs
+
+    def __len__(self):
+        return len(self.idx_to_token)
+
+"""Train for a minibatch with multiple GPUs """
+def train_batch_nlp(net, X, y, loss, trainer, devices):
+    if isinstance(X, list):
+        # Required for BERT fine-tuning (to be covered later)
+        X = [x.to(devices[0]) for x in X]
+    else:
+        X = X.to(devices[0]).long()
+    y = y.to(devices[0])
+    net.train()
+    trainer.zero_grad()
+    pred = net(X)
+    l = loss(pred, y)
+    l.sum().backward()
+    trainer.step()
+    train_loss_sum = l.sum()
+    train_acc_sum = accuracy(pred, y)
+    return train_loss_sum, train_acc_sum
+
+def train_nlp(net, train_iter, test_iter, loss, trainer, num_epochs,
+               devices=gpus):
+    """Train a model with multiple GPUs """
+    timer, num_batches = Timer(), len(train_iter)
+    animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0, 1],
+                            legend=['train loss', 'train acc', 'test acc'])
+
+    if isinstance(devices, list) and len(devices) >1:
+      net = nn.DataParallel(net, device_ids=devices).to(devices[0])
+    else:
+      device = devices[0]
+      net = net.to(device)
+
+    for epoch in range(num_epochs):
+        # Sum of training loss, sum of training accuracy, no. of examples,
+        # no. of predictions
+        metric = Accumulator(4)
+        for i, (features, labels) in enumerate(train_iter):
+            timer.start()
+            l, acc = train_batch_nlp(
+                net, features, labels, loss, trainer, devices)
+            metric.add(l, acc, labels.shape[0], labels.numel())
+            timer.stop()
+            if (i + 1) % (num_batches // 5) == 0 or i == num_batches - 1:
+                animator.add(epoch + (i + 1) / num_batches,
+                             (metric[0] / metric[2], metric[1] / metric[3],
+                              None))
+        test_acc = evaluate_accuracy_gpu(net, test_iter)
+        animator.add(epoch + 1, (None, None, test_acc))
+    print(f'loss {metric[0] / metric[2]:.3f}, train acc '
+          f'{metric[1] / metric[3]:.3f}, test acc {test_acc:.3f}')
+    print(f'{metric[2] * num_epochs / timer.sum():.1f} examples/sec on '
+          f'{str(devices)}')
+
+def show_heatmaps(matrices, xlabel, ylabel, titles=None, figsize=(2.5, 2.5),
+                  cmap='Reds'):
+    """Show heatmaps of matrices."""
+    use_svg_display()
+    num_rows, num_cols, _, _ = matrices.shape
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize,
+                                 sharex=True, sharey=True, squeeze=False)
+    for i, (row_axes, row_matrices) in enumerate(zip(axes, matrices)):
+        for j, (ax, matrix) in enumerate(zip(row_axes, row_matrices)):
+            pcm = ax.imshow(numpy(matrix), cmap=cmap)
+            if i == num_rows - 1:
+                ax.set_xlabel(xlabel)
+            if j == 0:
+                ax.set_ylabel(ylabel)
+            if titles:
+                ax.set_title(titles[j])
+    fig.colorbar(pcm, ax=axes, shrink=0.6);
+
+!pip install gym gymnasium >/dev/null
+
+import gym
+env = gym.make('FrozenLake-v1', is_slippery=False)
+
+def frozen_lake(seed):
+    """Defined in :numref:`sec_utils`"""
+    # See https://www.gymlibrary.dev/environments/toy_text/frozen_lake/ to learn more about this env
+    # How to process env.P.items is adpated from https://sites.google.com/view/deep-rl-bootcamp/labs
+
+    env = gym.make('FrozenLake-v1', is_slippery=False)
+    ##env.seed(seed)
+    env.action_space.np_random.seed(seed)
+    env.action_space.seed(seed)
+    env_info = {}
+    env_info['desc'] = env.desc  # 2D array specifying what each grid item means
+    env_info['num_states'] = 16 #env.nS  # Number of observations/states or obs/state dim
+    env_info['num_actions'] = 4 #env.nA  # Number of actions or action dim
+    # Define indices for (transition probability, nextstate, reward, done) tuple
+    env_info['trans_prob_idx'] = 0  # Index of transition probability entry
+    env_info['nextstate_idx'] = 1  # Index of next state entry
+    env_info['reward_idx'] = 2  # Index of reward entry
+    env_info['done_idx'] = 3  # Index of done entry
+    env_info['mdp'] = {}
+    env_info['env'] = env
+
+    for (s, others) in env.P.items():
+        # others(s) = {a0: [ (p(s'|s,a0), s', reward, done),...], a1:[...], ...}
+
+        for (a, pxrds) in others.items():
+            # pxrds is [(p1,next1,r1,d1),(p2,next2,r2,d2),..].
+            # e.g. [(0.3, 0, 0, False), (0.3, 0, 0, False), (0.3, 4, 1, False)]
+            env_info['mdp'][(s,a)] = pxrds
+
+    return env_info
+
+def show_heatmaps(matrices, xlabel, ylabel, titles=None, figsize=(2.5, 2.5),
+                  cmap='Reds'):
+    """Show heatmaps of matrices."""
+    use_svg_display()
+    num_rows, num_cols, _, _ = matrices.shape
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize,
+                                 sharex=True, sharey=True, squeeze=False)
+    for i, (row_axes, row_matrices) in enumerate(zip(axes, matrices)):
+        for j, (ax, matrix) in enumerate(zip(row_axes, row_matrices)):
+            pcm = ax.imshow(numpy(matrix), cmap=cmap)
+            if i == num_rows - 1:
+                ax.set_xlabel(xlabel)
+            if j == 0:
+                ax.set_ylabel(ylabel)
+            if titles:
+                ax.set_title(titles[j])
+    fig.colorbar(pcm, ax=axes, shrink=0.6);
+
+def masked_softmax(X, valid_lens):
+    """Perform softmax operation by masking elements on the last axis."""
+    # X: 3D tensor, valid_lens: 1D or 2D tensor
+    def _sequence_mask(X, valid_len, value=0):
+        maxlen = X.size(1)
+        mask = torch.arange((maxlen), dtype=torch.float32,
+                            device=X.device)[None, :] < valid_len[:, None]
+        X[~mask] = value
+        return X
+
+    if valid_lens is None:
+        return nn.functional.softmax(X, dim=-1)
+    else:
+        shape = X.shape
+        if valid_lens.dim() == 1:
+            valid_lens = torch.repeat_interleave(valid_lens, shape[1])
+        else:
+            valid_lens = valid_lens.reshape(-1)
+        # On the last axis, replace masked elements with a very large negative
+        # value, whose exponentiation outputs 0
+        X = _sequence_mask(X.reshape(-1, shape[-1]), valid_lens, value=-1e6)
+        return nn.functional.softmax(X.reshape(shape), dim=-1)
+
+def check_shape(a, shape):
+    """Check the shape of a tensor.`"""
+    assert a.shape == shape, \
+            f'tensor\'s shape {a.shape} != expected shape {shape}'
+
+def extract(filename, folder=None):
+    """Extract a zip/tar file into folder"""
+    base_dir = os.path.dirname(filename)
+    _, ext = os.path.splitext(filename)
+    assert ext in ('.zip', '.tar', '.gz'), 'Only support zip/tar files.'
+    if ext == '.zip':
+        fp = zipfile.ZipFile(filename, 'r')
+    else:
+        fp = tarfile.open(filename, 'r')
+    if folder is None:
+        folder = base_dir
+    fp.extractall(folder)
+
+class MTFraEng(DataModule):
+    """The English-French dataset"""
+    def _download(self):
+        extract(download(
+            DATA_URL+'fra-eng.zip', self.root,
+            '94646ad1522d915e7b0f9296181140edcf86a4f5'))
+        with open(self.root + '/fra-eng/fra.txt', encoding='utf-8') as f:
+            return f.read()
+
+    def _preprocess(self, text):
+        # Replace non-breaking space with space
+        text = text.replace('\u202f', ' ').replace('\xa0', ' ')
+        # Insert space between words and punctuation marks
+        no_space = lambda char, prev_char: char in ',.!?' and prev_char != ' '
+        out = [' ' + char if i > 0 and no_space(char, text[i - 1]) else char
+               for i, char in enumerate(text.lower())]
+        return ''.join(out)
+
+    def _tokenize(self, text, max_examples=None):
+        src, tgt = [], []
+        for i, line in enumerate(text.split('\n')):
+            if max_examples and i > max_examples: break
+            parts = line.split('\t')
+            if len(parts) == 2:
+                # Skip empty tokens
+                src.append([t for t in f'{parts[0]} <eos>'.split(' ') if t])
+                tgt.append([t for t in f'{parts[1]} <eos>'.split(' ') if t])
+        return src, tgt
+
+    # Move _build_array to be a method of the class
+    def _build_array(self, sentences, vocab, is_tgt=False):
+        pad_or_trim = lambda seq, t: (
+            seq[:t] if len(seq) > t else seq + ['<pad>'] * (t - len(seq)))
+        sentences = [pad_or_trim(s, self.num_steps) for s in sentences]
+        if is_tgt:
+                sentences = [['<bos>'] + s for s in sentences]
+        if vocab is None:
+            vocab = Vocab(sentences, min_freq=2)
+        array = torch.tensor([vocab[s] for s in sentences])
+        valid_len = reduce_sum(
+            astype(array != vocab['<pad>'], int32), 1)
+        return array, vocab, valid_len
+
+    def _build_arrays(self, raw_text, src_vocab=None, tgt_vocab=None):
+        src, tgt = self._tokenize(self._preprocess(raw_text),
+                                  self.num_train + self.num_val)
+        # Call _build_array as a method
+        src_array, src_vocab, src_valid_len = self._build_array(src, src_vocab)
+        tgt_array, tgt_vocab, _ = self._build_array(tgt, tgt_vocab, True)
+        return ((src_array, tgt_array[:,:-1], src_valid_len, tgt_array[:,1:]),
+                src_vocab, tgt_vocab)
+
+    def __init__(self, batch_size, num_steps=9, num_train=512, num_val=128):
+        super(MTFraEng, self).__init__()
+        self.save_hyperparameters()
+        self.arrays, self.src_vocab, self.tgt_vocab = self._build_arrays(
+            self._download())
+
+    # Implement the get_dataloader method
+    def get_dataloader(self, train):
+        src_array, tgt_array_input, src_valid_len, tgt_array_label = self.arrays
+        if train:
+            indices = slice(0, self.num_train)
+        else:
+            indices = slice(self.num_train, self.num_train + self.num_val)
+        return self.get_tensorloader(
+            (src_array, tgt_array_input, src_valid_len, tgt_array_label),
+            train, indices)
+
+    # Add the build method for prediction
+    def build(self, src_sentences, tgt_sentences):
+        # Preprocess and tokenize sentences individually
+        src_tokens = []
+        for i, s in enumerate(src_sentences):
+            # print(f"src_sentences[{i}] type: {type(s)}, value: {s}") # Debug print
+            src_tokens.append(self._preprocess(s).split() + ['<eos>'])
+
+        tgt_tokens = []
+        for i, s in enumerate(tgt_sentences):
+            # print(f"tgt_sentences[{i}] type: {type(s)}, value: {s}") # Debug print
+            tgt_tokens.append(self._preprocess(s).split() + ['<eos>'])
+
+
+        # Build arrays using existing vocabularies and num_steps
+        src_array, _, src_valid_len = self._build_array(src_tokens, self.src_vocab)
+        # For target input during prediction, we only need the <bos> token initially
+        # and then the predicted tokens. The tgt_sentences here are just for getting the initial <bos> and determining the batch size and max sequence length if needed.
+        # Let's build the target input array with only <bos> tokens and pad to num_steps
+        tgt_input_tokens = [['<bos>'] + ['<pad>'] * (self.num_steps - 1) for _ in tgt_sentences]
+        tgt_array_input, _, _ = self._build_array(tgt_input_tokens, self.tgt_vocab, is_tgt=False) # is_tgt=False here because we don't want an extra <bos> added by _build_array
+
+        # For prediction, we don't have the target labels, so we can return a placeholder or None for the last element if predict_step expects 4
+        # Based on predict_step signature: predict_step(self, batch, device, num_steps, save_attention_weights=False)
+        # and how batch is unpacked: src, tgt, src_valid_len, _ = batch
+        # It seems predict_step expects 4 elements in the batch, the last one is ignored.
+        # Let's return a placeholder tensor of zeros for the last element.
+        batch_size = len(src_sentences)
+        tgt_array_label_placeholder = torch.zeros(batch_size, self.num_steps, dtype=torch.long)
+
+        # Debug print types of returned elements
+        print(f"Type of src_array: {type(src_array)}")
+        print(f"Type of tgt_array_input: {type(tgt_array_input)}")
+        print(f"Type of src_valid_len: {type(src_valid_len)}")
+        print(f"Type of tgt_array_label_placeholder: {type(tgt_array_label_placeholder)}")
+
+        return (src_array, tgt_array_input, src_valid_len, tgt_array_label_placeholder)
+
+def bleu(pred_seq, label_seq, k):
+    """Compute the BLEU."""
+    pred_tokens, label_tokens = pred_seq.split(' '), label_seq.split(' ')
+    len_pred, len_label = len(pred_tokens), len(label_tokens)
+    score = math.exp(min(0, 1 - len_label / len_pred))
+    for n in range(1, min(k, len_pred) + 1):
+        num_matches, label_subs = 0, collections.defaultdict(int)
+        for i in range(len_label - n + 1):
+            label_subs[' '.join(label_tokens[i: i + n])] += 1
+        for i in range(len_pred - n + 1):
+            if label_subs[' '.join(pred_tokens[i: i + n])] > 0:
+                num_matches += 1
+                label_subs[' '.join(pred_tokens[i: i + n])] -= 1
+        score *= math.pow(num_matches / (len_pred - n + 1), math.pow(0.5, n))
+    return score
