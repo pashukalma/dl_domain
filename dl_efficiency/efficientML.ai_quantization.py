@@ -1,5 +1,4 @@
 ''' 
-
 ## EfficientML.ai: Quantization
 
 Templates by by MIT HAN Lab
@@ -17,7 +16,6 @@ Practice quantizing a classical neural network model to reduce both model size a
 - Understand the differences and tradeoffs between these quantization approaches
 
 ## Contents
-
 
 There are 2 main sections: ***K-Means Quantization*** and ***Linear Quantization***.
 
