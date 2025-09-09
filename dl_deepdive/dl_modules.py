@@ -21,7 +21,6 @@ import numpy as np
 np.random.seed(seed=1)
 
 """Common custom Classes and Methods"""
-
 reshape = lambda x, *args, **kwargs: x.reshape(*args, **kwargs)
 astype = lambda x, *args, **kwargs: x.type(*args, **kwargs)
 argmax = lambda x, *args, **kwargs: x.argmax(*args, **kwargs)
@@ -49,7 +48,7 @@ def try_all_gpus():
     return [gpu() for i in range(num_gpus())] # Removed argument 'i'
 
 class HyperParameters:
-    """The base class of hyperparameters."""
+    """The base class of hyperparameters """
     def save_hyperparameters(self, ignore=[]):
         raise NotImplemented
 
@@ -112,7 +111,7 @@ class ProgressBoard(HyperParameters):
         display.clear_output(wait=True)
 
 class Module(nn.Module, HyperParameters):
-    """The base class of models."""
+    """The base class of models """
     def __init__(self, plot_train_per_epoch=2, plot_valid_per_epoch=1):
         super().__init__()
         self.save_hyperparameters()
@@ -185,7 +184,7 @@ class Classifier(Module):
             print(layer.__class__.__name__, 'output shape:\t', X.shape)
 
 def load_data_fashion_mnist(batch_size, resize=None):
-    """Download the Fashion-MNIST dataset and then load it into memory."""
+    """Download the Fashion-MNIST dataset and then load it into memory """
     trans = [transforms.ToTensor()]
     if resize:
         trans.insert(0, transforms.Resize(resize))
@@ -253,7 +252,7 @@ class FashionMNIST(DataModule):
         show_images(X.squeeze(1), nrows, ncols, titles=labels)
 
 class Trainer(HyperParameters):
-    """ The base class for training models with data. """
+    """ The base class for training models with data """
     def __init__(self, max_epochs, num_gpus=0, gradient_clip_val=0):
         self.save_hyperparameters()
         assert num_gpus == 0, 'No GPU support yet'
@@ -330,7 +329,7 @@ class Trainer(HyperParameters):
                 param.grad[:] *= grad_clip_val / norm
 
 def accuracy(y_hat, y):
-    """Compute the number of correct predictions."""
+    """Compute the number of correct predictions """
     if len(y_hat.shape) > 1 and y_hat.shape[1] > 1:
         y_hat = argmax(y_hat, axis=1)
     cmp = astype(y_hat, y.dtype) == y
@@ -360,7 +359,7 @@ class Residual(nn.Module):
         return F.relu(Y)
 
 def resnet18(num_classes, in_channels=1):
-    """A slightly modified ResNet-18 model. """
+    """A slightly modified ResNet-18 model """
     def resnet_block(in_channels, out_channels, num_residuals,
                      first_block=False):
         blk = []
@@ -387,12 +386,12 @@ def resnet18(num_classes, in_channels=1):
     return net
 
 def init_cnn(module):
-    """Initialize weights for CNNs.`"""
+    """Initialize weights for CNNs`"""
     if type(module) == nn.Linear or type(module) == nn.Conv2d:
         nn.init.xavier_uniform_(module.weight)
 
 def add_to_class(Class):
-    """Register functions as methods in created class. `"""
+    """Register functions as methods in created class `"""
     def wrapper(obj):
         setattr(Class, obj.__name__, obj)
     return wrapper
@@ -492,7 +491,7 @@ class Animator:
         display.clear_output(wait=True)
 
 class Accumulator:
-    """For accumulating sums over `n` variables."""
+    """For accumulating sums over `n` variables """
     def __init__(self, n):
         self.data = [0.0] * n
 
@@ -508,7 +507,7 @@ class Accumulator:
 class Timer:
     """Record multiple running times."""
     def __init__(self):
-        """Defined in :numref:`sec_minibatch_sgd`"""
+        """Defined in :numref:`sec_minibatch_sgd """
         self.times = []
         self.start()
 
@@ -517,7 +516,7 @@ class Timer:
         self.tik = time.time()
 
     def stop(self):
-        """Stop the timer and record the time in a list."""
+        """Stop the timer and record the time in a list """
         self.times.append(time.time() - self.tik)
         return self.times[-1]
 
@@ -557,7 +556,7 @@ def evaluate_accuracy_gpu(net, data_iter, device=None):
     return metric[0] / metric[1]
 
 def download(url, folder='../data', sha1_hash=None):
-    """Download a file to folder and return the local filepath."""
+    """Download a file to folder and return the local filepath """
     if not url.startswith('http'):
         # For back compatability
         url, sha1_hash = DATA_HUB[url]
@@ -582,7 +581,7 @@ def download(url, folder='../data', sha1_hash=None):
     return fname
 
 def download_extract(name, folder=None):
-    """Download and extract a zip/tar file."""
+    """Download and extract a zip/tar file """
     fname = download(name)
     base_dir = os.path.dirname(fname)
     data_dir, ext = os.path.splitext(fname)
@@ -596,7 +595,7 @@ def download_extract(name, folder=None):
     return os.path.join(base_dir, folder) if folder else data_dir
 
 class VOCSegDataset(torch.utils.data.Dataset):
-    """A customized dataset to load the VOC dataset."""
+    """A customized dataset to load the VOC dataset """
 
     def __init__(self, is_train, crop_size, voc_dir):
         self.transform = torchvision.transforms.Normalize(
@@ -626,7 +625,7 @@ class VOCSegDataset(torch.utils.data.Dataset):
         return len(self.features)
 
 def read_voc_images(voc_dir, is_train=True):
-    """Read all VOC feature and label images."""
+    """Read all VOC feature and label images """
     txt_fname = os.path.join(voc_dir, 'ImageSets', 'Segmentation',
                              'train.txt' if is_train else 'val.txt')
     mode = torchvision.io.image.ImageReadMode.RGB
@@ -653,7 +652,7 @@ VOC_CLASSES = ['background', 'aeroplane', 'bicycle', 'bird', 'boat',
                'potted plant', 'sheep', 'sofa', 'train', 'tv/monitor']
 
 def voc_colormap2label():
-    """Build the mapping from RGB to class indices for VOC labels."""
+    """Build the mapping from RGB to class indices for VOC labels """
     colormap2label = torch.zeros(256 ** 3, dtype=torch.long)
     for i, colormap in enumerate(VOC_COLORMAP):
         colormap2label[
@@ -661,14 +660,14 @@ def voc_colormap2label():
     return colormap2label
 
 def voc_label_indices(colormap, colormap2label):
-    """Map any RGB values in VOC labels to their class indices."""
+    """Map any RGB values in VOC labels to their class indices """
     colormap = colormap.permute(1, 2, 0).numpy().astype('int32')
     idx = ((colormap[:, :, 0] * 256 + colormap[:, :, 1]) * 256
            + colormap[:, :, 2])
     return colormap2label[idx]
 
 def voc_rand_crop(feature, label, height, width):
-    """Randomly crop both feature and label images."""
+    """Randomly crop both feature and label images """
     rect = torchvision.transforms.RandomCrop.get_params(
         feature, (height, width))
     feature = torchvision.transforms.functional.crop(feature, *rect)
@@ -676,7 +675,7 @@ def voc_rand_crop(feature, label, height, width):
     return feature, label
 
 def load_data_voc(batch_size, crop_size):
-    """Load the VOC semantic segmentation dataset."""
+    """Load the VOC semantic segmentation dataset """
     voc_dir = download_extract('voc2012', os.path.join(
         'VOCdevkit', 'VOC2012'))
     num_workers = get_dataloader_workers()
@@ -699,13 +698,13 @@ DATA_HUB['cifar10_tiny'] = (DATA_URL + 'kaggle_cifar10_tiny.zip',
 DATA_HUB['aclImdb'] = (DATA_URL + 'aclImdb_v1.tar.gz','01ada507287d82875905620988597833ad4e0903')
 
 def get_dataloader_workers():
-    """Use 4 processes to read the data.`"""
+    """Use 4 processes to read the data """
     return 4
 
 gpus = ['cuda:0']
 
 def tokenize(lines, token='word'):
-    """Split text lines into word or character tokens."""
+    """Split text lines into word or character tokens """
     assert token in ('word', 'char'), 'Unknown token type: ' + token
     return [line.split() if token == 'word' else list(line) for line in lines]
 
@@ -840,7 +839,7 @@ def train_nlp(net, train_iter, test_iter, loss, trainer, num_epochs,
 
 def show_heatmaps(matrices, xlabel, ylabel, titles=None, figsize=(2.5, 2.5),
                   cmap='Reds'):
-    """Show heatmaps of matrices."""
+    """Show heatmaps of matrices """
     use_svg_display()
     num_rows, num_cols, _, _ = matrices.shape
     fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize,
@@ -894,7 +893,7 @@ def frozen_lake(seed):
 
 def show_heatmaps(matrices, xlabel, ylabel, titles=None, figsize=(2.5, 2.5),
                   cmap='Reds'):
-    """Show heatmaps of matrices."""
+    """Show heatmaps of matrices """
     use_svg_display()
     num_rows, num_cols, _, _ = matrices.shape
     fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize,
@@ -911,7 +910,7 @@ def show_heatmaps(matrices, xlabel, ylabel, titles=None, figsize=(2.5, 2.5),
     fig.colorbar(pcm, ax=axes, shrink=0.6);
 
 def masked_softmax(X, valid_lens):
-    """Perform softmax operation by masking elements on the last axis."""
+    """Perform softmax operation by masking elements on the last axis """
     # X: 3D tensor, valid_lens: 1D or 2D tensor
     def _sequence_mask(X, valid_len, value=0):
         maxlen = X.size(1)
@@ -934,7 +933,7 @@ def masked_softmax(X, valid_lens):
         return nn.functional.softmax(X.reshape(shape), dim=-1)
 
 def check_shape(a, shape):
-    """Check the shape of a tensor.`"""
+    """Check the shape of a tensor """
     assert a.shape == shape, \
             f'tensor\'s shape {a.shape} != expected shape {shape}'
 
@@ -952,7 +951,7 @@ def extract(filename, folder=None):
     fp.extractall(folder)
 
 class MTFraEng(DataModule):
-    """The English-French dataset"""
+    """The English-French dataset """
     def _download(self):
         extract(download(
             DATA_URL+'fra-eng.zip', self.root,
