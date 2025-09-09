@@ -13,4 +13,4 @@ The flexibility of MONAI modules in a PyTorch-based program: - Transforms for di
 - Load NIfTI images with metadata.
 - Scale medical images - Cache IO and transforms to accelerate training and validation.
 - 3D U-Net, Dice loss function, Mean Dice metric for 3D segmentation task.
-- Sliding window inference.
+- Sliding window inference. 
