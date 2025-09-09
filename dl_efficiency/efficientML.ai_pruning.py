@@ -1,6 +1,5 @@
 ''' 
 ## EfficientML.ai: Pruning
-
 Templates by by MIT HAN Lab
 
 ### Goals
