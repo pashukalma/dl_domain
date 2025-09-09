@@ -188,9 +188,7 @@ def cli_demo():
     @click.option("--out_dir", default="outputs", help="Output directory for generated videos")
     @click.option("--threshold-noise", default=0.025, help="threshold noise")
     @click.option("--linear-steps", default=None, type=int, help="linear steps")
-
 '''
-
 
 def gradio_demo():
     with gr.Blocks() as demo:

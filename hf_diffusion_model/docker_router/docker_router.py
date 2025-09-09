@@ -1,4 +1,3 @@
-## Relevant for supplying routes
 from fastapi import FastAPI
 
 ## Relevant for supporting docker utilities

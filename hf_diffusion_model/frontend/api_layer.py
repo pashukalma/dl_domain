@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-##from motor.motor_asyncio import AsyncIOMotorClient
-#from kafka import KafkaProducer
+from motor.motor_asyncio import AsyncIOMotorClient
+from kafka import KafkaProducer
 import json
 from typing import Optional
 import uuid
@@ -22,7 +22,6 @@ import logging
 import motor.motor_asyncio # MongoDB async driver
 import traceback # For detailed error logging
 import gradio as gr # Import Gradio
-
 
 
 MONGO_DETAILS = os.getenv("MONGO_URI", "mongodb://localhost:27017")

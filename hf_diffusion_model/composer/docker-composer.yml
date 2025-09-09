@@ -1,4 +1,3 @@
-# Add to the existing docker-compose.yml or create a new one
 version: '3.8'
 services:
   # ... (zookeeper and broker services here if using them) ...
