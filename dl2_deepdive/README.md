@@ -1,8 +1,8 @@
 ### Deep Learning Research & Implementation Lab
 This repository contains a collection of Jupyter Notebooks and Python modules designed to explore, implement, and visualize fundamental and advanced Deep Learning (DL) concepts. The materials cover the spectrum from basic perceptrons to state-of-the-art Transformer architectures and Reinforcement Learning.
 
-📁 Repository Structure
-🛠 Core Utilities
+#### Repository Structure 
+**Core Utilities**
 - dl_modules.py: It contains shared classes, custom PyTorch/Lightning wrappers, and utility functions (e.g., Classifier, Trainer, and evaluation metrics like BLEU) used across all notebooks to ensure code modularity and readability.
 
 **Architectures & Mechanisms**
